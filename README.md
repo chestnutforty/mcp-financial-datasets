@@ -1,0 +1,216 @@
+# MCP Financial Datasets Server
+
+MCP server providing financial data from financialdatasets.ai with backtesting support.
+
+## Overview
+
+This server provides comprehensive financial data including company financials, stock prices, crypto prices, and company news from the financialdatasets.ai API. All tools are backtesting-compliant, ensuring no future information leakage.
+
+## Features
+
+- **Backtesting Compliant**: All data strictly filtered to before cutoff date
+- **Company Financials**: Income statements, balance sheets, cash flow statements
+- **Historical Prices**: Stock and cryptocurrency price data (OHLCV)
+- **Company News**: News articles with sentiment analysis
+- **Flexible Periods**: Annual, quarterly, or trailing twelve months (TTM) data
+- **Crypto Support**: 100+ cryptocurrencies with historical price data
+
+## Tools
+
+### Financial Statements
+
+#### `get_income_statements`
+Get historical income statements for a company.
+
+**Parameters:**
+- `ticker` (str): Stock ticker symbol (e.g., AAPL, MSFT, GOOGL)
+- `cutoff_date` (str): Only return data with report_period <= cutoff_date
+- `period` (str): "annual", "quarterly", or "ttm" (default: "annual")
+- `limit` (int): Number of historical periods (default: 4)
+
+**Returns:** JSON array with revenue, net_income, operating_income, earnings_per_share, etc.
+
+#### `get_balance_sheets`
+Get historical balance sheets for a company.
+
+**Parameters:** Same as `get_income_statements`
+
+**Returns:** JSON array with total_assets, cash_and_equivalents, total_debt, shareholders_equity, etc.
+
+#### `get_cash_flow_statements`
+Get historical cash flow statements for a company.
+
+**Parameters:** Same as `get_income_statements`
+
+**Returns:** JSON array with net_cash_flow_from_operations, capital_expenditure, free_cash_flow, etc.
+
+### Stock Prices
+
+#### `get_historical_stock_prices`
+Get historical stock price data (OHLCV) for a date range.
+
+**Parameters:**
+- `ticker` (str): Stock ticker symbol (e.g., AAPL, TSLA, NVDA)
+- `start_date` (str): Start date in YYYY-MM-DD format
+- `end_date` (str): End date in YYYY-MM-DD format (clamped to cutoff_date)
+- `cutoff_date` (str): Maximum date for returned data
+- `interval` (str): "minute", "hour", "day", "week", or "month" (default: "day")
+- `interval_multiplier` (int): Multiply interval (e.g., 5 with "minute" = 5-minute bars)
+
+**Returns:** JSON array with open, close, high, low, volume, timestamp fields
+
+### Company News
+
+#### `get_company_news`
+Get recent news articles about a company with sentiment analysis.
+
+**Parameters:**
+- `ticker` (str): Stock ticker symbol
+- `cutoff_date` (str): Only return news published before this date
+
+**Returns:** JSON array (up to 20 articles) with title, url, date, author, source, sentiment
+
+### Cryptocurrency
+
+#### `get_available_crypto_tickers`
+Get list of all available cryptocurrency tickers.
+
+**Returns:** JSON array of ticker symbols (e.g., ["BTC-USD", "ETH-USD", "SOL-USD"])
+
+#### `get_crypto_prices`
+Get historical cryptocurrency price data (OHLCV).
+
+**Parameters:**
+- `ticker` (str): Crypto ticker symbol (e.g., BTC-USD, ETH-USD, SOL-USD)
+- `start_date` (str): Start date in YYYY-MM-DD format
+- `end_date` (str): End date in YYYY-MM-DD format (clamped to cutoff_date)
+- `cutoff_date` (str): Maximum date for returned data
+- `interval` (str): "minute", "hour", "day", "week", or "month" (default: "day")
+- `interval_multiplier` (int): Multiply interval
+
+**Returns:** JSON array with open, close, high, low, volume, timestamp fields
+
+## Environment Variables
+
+**Required:**
+- `FINANCIAL_DATASETS_API_KEY`: API key for financialdatasets.ai
+
+Get your API key at: https://financialdatasets.ai/
+
+## Installation
+
+```bash
+cd mcp-financial-datasets
+uv sync
+```
+
+## Usage
+
+### Testing Locally
+```bash
+mcp run -t sse financial_datasets_server.py:mcp
+```
+
+### As Git Submodule
+```bash
+git submodule add <repo-url> mcp-servers/mcp-financial-datasets
+```
+
+## Backtesting Compliance
+
+This server implements strict backtesting controls:
+
+### Financial Statements
+- **Filter Parameter**: `report_period_lte={cutoff_date}` in API requests
+- **Guarantee**: Only returns financial statements for periods ending on or before cutoff_date
+- **Note**: Report period is when the fiscal period ended, not when filed with SEC
+
+### Price Data
+- **End Date Clamping**: If `end_date > cutoff_date`, automatically clamps to `cutoff_date`
+- **Guarantee**: No price data returned after cutoff_date
+- **Safe Pattern**: Always request with `end_date` at or before `cutoff_date`
+
+### Company News
+- **Filter Parameter**: `end_date={cutoff_date}` in API requests
+- **Guarantee**: Only returns news published before cutoff_date
+- **Includes**: Title, URL, publication date, author, source, sentiment
+
+### Disabled Tools
+
+The following tools are **intentionally disabled** for backtesting compliance:
+
+- `get_current_stock_price` - Always returns latest price (future information)
+- `get_current_crypto_price` - Always returns latest price (future information)
+- `get_sec_filings` - API only provides `report_date`, not `filing_date` (when made public)
+
+**Alternative**: Use `get_historical_stock_prices` or `get_crypto_prices` with `start_date=end_date=cutoff_date` to get price at a specific historical date.
+
+## API Details
+
+**Base URL**: `https://api.financialdatasets.ai`
+
+**Authentication**: X-API-KEY header (optional but recommended for higher rate limits)
+
+**Endpoints Used**:
+- `/financials/income-statements/`
+- `/financials/balance-sheets/`
+- `/financials/cash-flow-statements/`
+- `/prices/` (stock prices)
+- `/news/` (company news)
+- `/crypto/prices/` (cryptocurrency prices)
+- `/crypto/prices/tickers` (available crypto tickers)
+
+## Error Handling
+
+All tools return user-friendly error messages:
+- Missing or invalid API key
+- Invalid ticker symbols
+- Date parsing errors
+- API request failures
+- No data found for requested parameters
+
+Errors are returned as strings rather than raising exceptions.
+
+## Example Queries
+
+### Get Apple's Annual Financials
+```python
+income = await get_income_statements(
+    ticker="AAPL",
+    period="annual",
+    limit=4,
+    cutoff_date="2024-01-01"
+)
+```
+
+### Get Bitcoin Price History
+```python
+prices = await get_crypto_prices(
+    ticker="BTC-USD",
+    start_date="2024-01-01",
+    end_date="2024-06-01",
+    interval="day",
+    cutoff_date="2024-06-01"
+)
+```
+
+### Get Tesla News
+```python
+news = await get_company_news(
+    ticker="TSLA",
+    cutoff_date="2024-06-01"
+)
+```
+
+## Limitations
+
+- **SEC Filings**: Not available due to lack of `filing_date` field in API
+- **Real-time Data**: Current price endpoints disabled for backtesting compliance
+- **Rate Limits**: Subject to financialdatasets.ai API rate limits
+- **API Coverage**: Data availability depends on what financialdatasets.ai provides
+
+## Dependencies
+
+- **fastmcp**: MCP server framework
+- **httpx**: Async HTTP client for API requests
+- **python-dotenv**: Environment variable management

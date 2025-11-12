@@ -1,0 +1,15 @@
+[project]
+name = "mcp-financial-datasets"
+version = "0.1.0"
+description = "MCP server for financial data from financialdatasets.ai"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastmcp",
+    "httpx",
+    "python-dotenv",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

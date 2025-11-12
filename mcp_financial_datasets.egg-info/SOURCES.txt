@@ -1,0 +1,8 @@
+README.md
+financial_datasets_server.py
+pyproject.toml
+mcp_financial_datasets.egg-info/PKG-INFO
+mcp_financial_datasets.egg-info/SOURCES.txt
+mcp_financial_datasets.egg-info/dependency_links.txt
+mcp_financial_datasets.egg-info/requires.txt
+mcp_financial_datasets.egg-info/top_level.txt
