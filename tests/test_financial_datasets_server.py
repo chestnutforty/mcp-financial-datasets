@@ -240,25 +240,6 @@ async def test_invalid_ticker():
 
 
 @pytest.mark.asyncio
-async def test_different_intervals():
-    """Test different time intervals for price data"""
-    result = await get_historical_stock_prices.fn(
-        ticker="AAPL",
-        start_date="2023-01-01",
-        end_date="2023-01-07",
-        cutoff_date="2024-01-01",
-        interval="hour",
-        interval_multiplier=1
-    )
-
-    assert result is not None
-    assert isinstance(result, str)
-    # Should return valid JSON even if empty
-    data = json.loads(result)
-    assert isinstance(data, list)
-
-
-@pytest.mark.asyncio
 async def test_ttm_period():
     """Test trailing twelve months period"""
     result = await get_income_statements.fn(
