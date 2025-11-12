@@ -15,6 +15,7 @@ This server provides comprehensive financial data including company financials, 
 - **Flexible Periods**: Annual, quarterly, or trailing twelve months (TTM) data
 - **Crypto Support**: 100+ cryptocurrencies with historical price data
 
+
 ## Tools
 
 ### Financial Statements
@@ -208,6 +209,57 @@ news = await get_company_news(
 - **Real-time Data**: Current price endpoints disabled for backtesting compliance
 - **Rate Limits**: Subject to financialdatasets.ai API rate limits
 - **API Coverage**: Data availability depends on what financialdatasets.ai provides
+
+## Testing
+
+### Setup
+
+1. Install test dependencies:
+```bash
+uv pip install -e ".[test]"
+```
+
+2. Configure environment variables by copying `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+
+3. Add your API key to `.env`:
+   - `FINANCIAL_DATASETS_API_KEY` - Required from https://financialdatasets.ai/
+
+### Running Tests
+
+Run all tests:
+```bash
+pytest
+```
+
+Run with verbose output:
+```bash
+pytest -v
+```
+
+Run specific test file:
+```bash
+pytest tests/test_financial_datasets_server.py
+```
+
+Run specific test:
+```bash
+pytest tests/test_financial_datasets_server.py::test_get_income_statements -v
+```
+
+### Test Coverage
+
+The test suite covers:
+- **Financial statements**: Income statements, balance sheets, cash flow statements (annual, quarterly, TTM)
+- **Stock prices**: Historical price data with different intervals and cutoff date enforcement
+- **Company news**: News article retrieval with date filtering
+- **Cryptocurrency**: Available tickers, price data for multiple crypto pairs
+- **Error handling**: Invalid tickers, date validation, API errors
+- **Edge cases**: Large limits, different periods, interval multipliers
+
+**Note**: Tests make real API calls and require a valid `FINANCIAL_DATASETS_API_KEY`. Tests will be skipped if the API key is not set. API rate limits may apply.
 
 ## Dependencies
 
